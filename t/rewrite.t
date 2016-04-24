@@ -6,7 +6,10 @@ BEGIN {
     use_ok('Ref::Util::Rewriter');
 }
 
-can_ok( Ref::Util::Rewriter::, qw<rewrite rewrite_string rewrite_file> );
+can_ok(
+    Ref::Util::Rewriter::,
+    qw<rewrite_doc rewrite_string rewrite_file>,
+);
 
 my @tests = (
     q{ref $foo eq 'ARRAY';}        => q{is_arrayref($foo);},
