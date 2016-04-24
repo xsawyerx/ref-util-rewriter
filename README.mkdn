@@ -1,0 +1,77 @@
+# SYNOPSIS
+
+    use Ref::Util::Rewriter qw< rewrite_string >;
+    my $new_string = rewrite_string(
+        q! if ( ref($foo) eq 'HASH' ) { ... } !
+    );
+
+    # $new_string = q! if ( is_hashref($foo) ) { ... } !;
+
+    use Ref::Util::Rewriter qw< rewrite_file >;
+    rewrite_file("script.pl"); # file was now rewritten
+
+# DESCRIPTION
+
+This module rewrites Perl code to use [Ref::Util](https://metacpan.org/pod/Ref::Util) instead of your
+regular calls to `ref`. It is much substantially faster and avoids
+several mistakes that haunt beginning and advanced Perl developers.
+
+Please review [Ref::Util](https://metacpan.org/pod/Ref::Util) to fully understand the possible implications
+of using it in your case instead of the built-in `ref` function.
+
+The following constructs of code are supported:
+
+- Simple statement conditions
+
+        ref($foo) eq 'CODE'; # -> is_coderef($foo)
+        ref $foo  eq 'CODE'; # -> is_coderef($foo)
+        ref $foo;            # -> is_ref($foo)
+
+- Compound statement conditions
+
+        if ( ref($foo) eq 'HASH' ) {...} # -> if( is_hashref($foo) ) {...}
+        if ( ref $foo  eq 'HASH' ) {...} # -> if( is_hashref($foo) ) {...}
+        if ( ref $foo )            {...} # -> if( is_ref($foo) )     {...}
+
+- Postfix logical conditions
+
+        ref($foo) eq 'ARRAY' and ... # -> is_arrayref($foo) and ...
+        ref($foo) eq 'ARRAY' or  ... # -> is_arrayref($foo) or  ...
+        ref($foo)            or  ... # -> is_ref($foo)      or  ...
+
+The following types of references comparisons are recognized:
+
+- `SCALAR` = `is_scalarref`
+- `ARRAY` = `is_arrayref`
+- `HASH` = `is_hashref`
+- `CODE` = `is_coderef`
+- `Regexp` = `is_coderef`
+- `GLOB` = `is_globref`
+- `IO` = `is_ioref`
+- `REF` = `is_refref`
+
+# SUBROUTINES
+
+## rewrite\_string($perl\_code\_string)
+
+Receive a string representing Perl code and return a new string in which
+all `ref` calls are replaced with the appropriate calls to [Ref::Util](https://metacpan.org/pod/Ref::Util).
+
+## rewrite\_file($filename)
+
+Receive a filename as a string and rewrite the file in place (thus the
+file is altered) in which all `ref` calls are replaced with the
+appropriate calls to [Ref::Util](https://metacpan.org/pod/Ref::Util).
+
+Careful, this function changes your file in place. It is advised to put
+your file in some revision control so you could see what changes it has
+done and commit them if you accept them.
+
+This does **not** add a new statement to use [Ref::Util](https://metacpan.org/pod/Ref::Util), you will still
+need to do that yourself.
+
+## rewrite\_doc
+
+The guts of the module which uses a direct [PPI::Document](https://metacpan.org/pod/PPI::Document) object and
+works on that. It is used internally, but you may call it yourself if
+you so wish.
