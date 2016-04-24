@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 2 + 7;
+use Test::More tests => 2 + 6;
 
 BEGIN {
     use_ok('Ref::Util::Rewriter');
