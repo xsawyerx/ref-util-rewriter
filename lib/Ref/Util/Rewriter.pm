@@ -186,6 +186,16 @@ __END__
 
 =head1 DESCRIPTION
 
+B<Warning:> You should take into account that the meaning of
+L<Ref::Util>'s functions are subject to change with regards to
+blessed objects. This might change the rewriter code in the future
+to be smarter. This might also mean this won't necessarily achieve
+what you're expecting.
+
+Run it, check the diff, check your code, run your code, then
+(maybe) - knowing the risk you take and absolutely no liability on
+me, my family, nor my pets - merge it.
+
 This module rewrites Perl code to use L<Ref::Util> instead of your
 regular calls to C<ref>. It is much substantially faster and avoids
 several mistakes that haunt beginning and advanced Perl developers.

@@ -4,7 +4,7 @@ Ref::Util::Rewriter - Rewrite your code to use Ref::Util
 
 # VERSION
 
-version 0.002
+version 0.003
 
 # SYNOPSIS
 
@@ -19,6 +19,16 @@ version 0.002
     rewrite_file("script.pl"); # file was now rewritten
 
 # DESCRIPTION
+
+**Warning:** You should take into account that the meaning of
+[Ref::Util](https://metacpan.org/pod/Ref::Util)'s functions are subject to change with regards to
+blessed objects. This might change the rewriter code in the future
+to be smarter. This might also mean this won't necessarily achieve
+what you're expecting.
+
+Run it, check the diff, check your code, run your code, then
+(maybe) - knowing the risk you take and absolutely no liability on
+me, my family, nor my pets - merge it.
 
 This module rewrites Perl code to use [Ref::Util](https://metacpan.org/pod/Ref::Util) instead of your
 regular calls to `ref`. It is much substantially faster and avoids
