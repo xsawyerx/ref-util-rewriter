@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 2 + 6;
+use Test::More tests => 11;
 
 BEGIN {
     use_ok('Ref::Util::Rewriter');
@@ -18,16 +18,33 @@ my @tests = (
     q{ref($foo) or}                => q{is_ref($foo) or},
     q!if (ref($foo) eq 'ARRAY') {! => q!if (is_arrayref($foo)) {!,
     q{ref($foo) eq 'ARRAY' or}     => q{is_arrayref($foo) or},
+    q[eval q{ref $foo eq 'ARRAY'}] => q[eval q{is_arrayref($foo)}],
+    q[eval q/ref $foo eq 'ARRAY'/] => q[eval q/is_arrayref($foo)/],
+    q[eval "ref $foo eq 'ARRAY'"]  => q[eval "is_arrayref($foo)"],
 
     # not supported (yet?)
     #qq{ref(\$foo) # comment\nor}   => q{is_ref($foo) or # comment},
 );
 
-while ( my ( $input, $output ) = splice @tests, 0, 2 ) {
+while ( my ( $input, $expect ) = splice @tests, 0, 2 ) {
     my $test_name = $input;
-    is(
-        Ref::Util::Rewriter::rewrite_string($input),
-        $output,
-        $test_name,
-    );
+    my $output    = Ref::Util::Rewriter::rewrite_string($input);
+    is( $output, $expect, $test_name, );    # or diag main::dump($output);
+
+}
+
+sub dump {
+    my $s = shift or return;
+
+    require PPI::Dumper;
+    require PPI::Document;
+    my $str = eval {
+        my $doc  = PPI::Document->new( \$s );
+        my $dump = PPI::Dumper->new($doc);
+        $dump->string;
+    };
+
+    return 'ERROR' unless defined $str;
+    return $str;
+
 }
