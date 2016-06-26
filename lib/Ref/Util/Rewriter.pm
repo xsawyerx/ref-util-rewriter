@@ -9,7 +9,7 @@ use Safe::Isa;
 use Exporter   qw< import >;
 use List::Util qw< first  >;
 
-my @EXPORT_OK = qw< rewrite_string rewrite_file >;
+our @EXPORT_OK = qw< rewrite_string rewrite_file >;
 
 my %reftype_to_reffunc = (
     SCALAR => 'is_scalarref',
