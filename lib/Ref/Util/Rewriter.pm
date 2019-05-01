@@ -39,15 +39,13 @@ sub rewrite_doc {
     my @cond_ops       = qw<or || and &&>;
     my @new_statements;
 
+    ALL_STATEMENTS:
     foreach my $statement ( @{$all_statements} ) {
         # if there's an "if()" statement, it appears as a Compound statement
         # and then each internal statement appears again,
         # causing duplication in results
         $statement->$_isa('PPI::Statement::Compound')
             and next;
-
-        # avoid a bug in PPI after removal
-        last unless $statement->{children};
 
         # find the 'ref' functions
         my $ref_subs = $statement->find( sub {
@@ -171,6 +169,11 @@ sub rewrite_doc {
             }
 
             $ref_sub->remove;
+
+            # update statements... to avoid PPI issues when moving elements...
+            # this is very ugly... but probably the best solution
+            $all_statements = $doc->find('PPI::Statement');
+            goto ALL_STATEMENTS;
         }
     }
 
