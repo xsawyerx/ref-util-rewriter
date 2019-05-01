@@ -46,6 +46,9 @@ sub rewrite_doc {
         $statement->$_isa('PPI::Statement::Compound')
             and next;
 
+        # avoid a bug in PPI after removal
+        last unless $statement->{children};
+
         # find the 'ref' functions
         my $ref_subs = $statement->find( sub {
             $_[1]->isa('PPI::Token::Word') and $_[1]->content eq 'ref'
@@ -60,9 +63,13 @@ sub rewrite_doc {
             my $sib = $ref_sub;
             my ( @func_args, $reffunc_doc, @rest_of_tokens );
 
+            my @siblings_to_remove;
+
             while ( $sib = $sib->next_sibling ) {
                 # end of statement/expression
                 my $content = $sib->content;
+
+                push @siblings_to_remove, $sib;
                 $content eq ';' and last;
 
                 # we might already have a statement
@@ -89,6 +96,8 @@ sub rewrite_doc {
                             warn "Error: no match for $val_str\n";
                             next REF_STATEMENT;
                         }
+
+                        push @siblings_to_remove, $sib;
 
                         $statement_def = [ $func, \@func_args, '' ];
                     } elsif ( first { $content eq $_ } @cond_ops ) {
@@ -147,8 +156,21 @@ sub rewrite_doc {
 
             my $new_statement = ( $reffunc_doc->children )[0];
 
-            $ref_sub->parent->insert_before($new_statement);
-            $ref_sub->parent->remove;
+            # remove as much as we can
+            foreach my $element ( @siblings_to_remove ) {
+                $element->remove;
+            }
+
+            # remove the trailing space to avoid duplicate spaces
+            if ( my $next = $ref_sub->next_sibling ) {
+                $next->remove if $next->isa('PPI::Token::Whitespace');
+            }
+
+            foreach my $element ( $new_statement->children ) {
+                my $insert = $ref_sub->insert_before( $element );
+            }
+
+            $ref_sub->remove;
         }
     }
 

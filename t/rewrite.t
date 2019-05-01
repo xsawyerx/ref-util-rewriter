@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 2 + 6;
+use Test::More tests => 2 + 8;
 
 BEGIN {
     use_ok('Ref::Util::Rewriter');
@@ -18,6 +18,8 @@ my @tests = (
     q{ref($foo) or}                => q{is_ref($foo) or},
     q!if (ref($foo) eq 'ARRAY') {! => q!if (is_arrayref($foo)) {!,
     q{ref($foo) eq 'ARRAY' or}     => q{is_arrayref($foo) or},
+    q!sub { my $is_arrayref = ref $self eq 'ARRAY'; }! => q!sub { my $is_arrayref = is_arrayref($self); }!,
+    q!sub { my $is_arrayref = ref $self eq 'ARRAY' && $x == 42; }! => q!sub { my $is_arrayref = is_arrayref($self) && $x == 42; }!,
 
     # not supported (yet?)
     #qq{ref(\$foo) # comment\nor}   => q{is_ref($foo) or # comment},
