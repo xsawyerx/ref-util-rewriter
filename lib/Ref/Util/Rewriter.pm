@@ -30,7 +30,16 @@ sub rewrite_string {
 
 sub rewrite_file {
     my $file = shift;
-    return rewrite_doc( PPI::Document->new($file) );
+    my $content = rewrite_doc( PPI::Document->new($file) );
+
+    {
+        # replace file content
+        open( my $fh, '>', $file ) or die "Failed to open file $file: $!";
+        print {$fh} $content;
+        close $fh;
+    }
+
+    return $content;
 }
 
 sub rewrite_doc {
