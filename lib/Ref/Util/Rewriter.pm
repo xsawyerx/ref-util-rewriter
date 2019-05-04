@@ -41,8 +41,10 @@ sub rewrite_file {
 }
 
 sub rewrite_doc {
-    my $doc            = shift;
+    my $doc            = shift or die;
     my $all_statements = $doc->find('PPI::Statement');
+    $all_statements    = [] unless defined $all_statements;
+
     my @cond_ops       = qw<or || and &&>;
     my @new_statements;
 
@@ -54,9 +56,11 @@ sub rewrite_doc {
         $statement->$_isa('PPI::Statement::Compound')
             and next;
 
+        _handle_eval($statement);
+
         # find the 'ref' functions
         my $ref_subs = $statement->find( sub {
-            $_[1]->isa('PPI::Token::Word') and $_[1]->content eq 'ref'
+            $_[1]->isa('PPI::Token::Word') && $_[1]->content eq 'ref'
         }) or next;
 
         my $statement_def;
@@ -185,6 +189,74 @@ sub rewrite_doc {
     }
 
     return "$doc";
+}
+
+
+sub _handle_eval {
+    my $statement = shift;
+    my $evals     = $statement->find( sub {
+            $_[1]->isa('PPI::Token::Word') && $_[1]->content eq 'eval';
+    }) || [];
+
+    foreach my $eval ( @{$evals} ) {
+        my $sib = $eval;
+
+        while ( $sib = $sib->next_sibling ) {
+            if ( $sib->isa('PPI::Token::Quote') ) {
+                last unless $sib->content =~ qr{\bref\b}; # shortcut
+
+                # '' - PPI::Token::Quote::Single
+                # "q{}" - PPI::Token::Quote::Literal
+                # "" - PPI::Token::Quote::Double
+                # "qq{}" - PPI::Token::Quote::Interpolate
+                my ( $content, $after, $before );
+                my $sib_class = ref $sib;
+
+                if ( $sib->isa('PPI::Token::Quote::Single') ) {
+                    $after = $before = q{'};
+                    $content = $sib->literal;
+                } elsif ( $sib->isa('PPI::Token::Quote::Double') ) {
+                    $after = $before = q{"};
+                    $content = $sib->string;
+                } elsif ( $sib->isa('PPI::Token::Quote::Literal') ) {
+                    $before = 'q{';
+                    $after  = '}';
+
+                    if ( $sib->content =~ qr{^q(.).*(.)$} ) {
+                        $before = 'q' . $1;
+                        $after  = $2;
+                    }
+
+                    $content = $sib->literal;
+                } elsif ( $sib->isa('PPI::Token::Quote::Interpolate') ) {
+                    $before = 'qq{';
+                    $after  = '}';
+
+                    if ( $sib->string =~ qr{^q(.).*(.)$} ) {
+                        $before = $1;
+                        $after  = $2;
+                    }
+
+                    $content = $sib->string;
+                }
+
+                $content
+                    or next;
+
+                # FIXME: this is very ugly....
+                # FIXME need to escape for literals but the idea is there
+                $sib->{'content'}
+                    = $before . rewrite_string($content) . $after;
+
+                # Idea:
+                # my $p = PPI::Token::Quote::Double->new( rewrite_string($content) );
+                # $sib->insert_before( $p );
+                # $sib->delete;
+                last;
+            }
+        }
+
+    }
 }
 
 sub _create_statement {
