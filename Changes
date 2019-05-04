@@ -1,5 +1,6 @@
 {{NEXT}}
 
+        * Support additional cases. (Nicolas R. @atoomic)
         * Add TravisCI configuration. (Nicolas R. @atoomic)
 
 0.004
