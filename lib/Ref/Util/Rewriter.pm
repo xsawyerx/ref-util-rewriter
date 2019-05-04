@@ -39,6 +39,7 @@ sub rewrite_doc {
     my @cond_ops       = qw<or || and &&>;
     my @new_statements;
 
+    ALL_STATEMENTS:
     foreach my $statement ( @{$all_statements} ) {
         # if there's an "if()" statement, it appears as a Compound statement
         # and then each internal statement appears again,
@@ -60,9 +61,13 @@ sub rewrite_doc {
             my $sib = $ref_sub;
             my ( @func_args, $reffunc_doc, @rest_of_tokens );
 
+            my @siblings_to_remove;
+
             while ( $sib = $sib->next_sibling ) {
                 # end of statement/expression
                 my $content = $sib->content;
+
+                push @siblings_to_remove, $sib;
                 $content eq ';' and last;
 
                 # we might already have a statement
@@ -89,6 +94,8 @@ sub rewrite_doc {
                             warn "Error: no match for $val_str\n";
                             next REF_STATEMENT;
                         }
+
+                        push @siblings_to_remove, $sib;
 
                         $statement_def = [ $func, \@func_args, '' ];
                     } elsif ( first { $content eq $_ } @cond_ops ) {
@@ -147,8 +154,26 @@ sub rewrite_doc {
 
             my $new_statement = ( $reffunc_doc->children )[0];
 
-            $ref_sub->parent->insert_before($new_statement);
-            $ref_sub->parent->remove;
+            # remove as much as we can
+            foreach my $element ( @siblings_to_remove ) {
+                $element->remove;
+            }
+
+            # remove the trailing space to avoid duplicate spaces
+            if ( my $next = $ref_sub->next_sibling ) {
+                $next->remove if $next->isa('PPI::Token::Whitespace');
+            }
+
+            foreach my $element ( $new_statement->children ) {
+                my $insert = $ref_sub->insert_before( $element );
+            }
+
+            $ref_sub->remove;
+
+            # update statements... to avoid PPI issues when moving elements...
+            # this is very ugly... but probably the best solution
+            $all_statements = $doc->find('PPI::Statement');
+            goto ALL_STATEMENTS;
         }
     }
 
