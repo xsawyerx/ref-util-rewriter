@@ -1,3 +1,7 @@
+{{NEXT}}
+
+        * Add TravisCI configuration. (Nicolas R. @atoomic)
+
 0.004
         * Fix exporting to use "our". (Marco Fontani)
 
