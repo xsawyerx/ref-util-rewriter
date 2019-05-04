@@ -1,5 +1,7 @@
 {{NEXT}}
 
+        * Actually rewrite a file with rewrite_file.
+          (Nicolas R. @atoomic, Sawyer X)
         * Support additional cases. (Nicolas R. @atoomic)
         * Add TravisCI configuration. (Nicolas R. @atoomic)
 
