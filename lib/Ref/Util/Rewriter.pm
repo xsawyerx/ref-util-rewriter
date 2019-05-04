@@ -210,7 +210,6 @@ sub _handle_eval {
                 # "" - PPI::Token::Quote::Double
                 # "qq{}" - PPI::Token::Quote::Interpolate
                 my ( $content, $after, $before );
-                my $sib_class = ref $sib;
 
                 if ( $sib->isa('PPI::Token::Quote::Single') ) {
                     $after = $before = q{'};
